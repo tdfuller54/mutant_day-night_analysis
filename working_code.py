@@ -18,12 +18,20 @@ data = pd.read_table("M:\\Lab\\Tyson\\Syne1b master folder\\mutant day-night dat
 ## get subset of data starting at 11pm of night 4 and ending at 10am day 7
 # data = data.loc[data["end"] <= 237060]
 # data = data.loc[data["end"] >= 24660]
+data["sttime"] = pd.to_datetime(data["sttime"])
 
 ## convert sttime column to actual time unites in python
-data["sttime"] = pd.Timestamp(data["sttime"])
+#data["sttime"] = data["sttime"].apply(lambda x: dt.datetime.strptime(x, '%H:%M:%S'))
 data[["sttime"]].info()
+#data["sttime"] = pd.Timestamp(data["sttime"])
+print(data["sttime"])
 
-
+data["sttime"] = data["sttime"].apply(lambda x: pd.Timestamp.round(x, 'min'))
+data[["sttime"]].info()
+print(data["sttime"])
+data["sttime"] = data["sttime"].apply(lambda x: x.time())
+data[["sttime"]].info()
+print(data["sttime"])
 ##define a function to round time integers to the nearest minute and call this on sttime to clean up zebrabox times
 def roundTime(timeInput=None, dateDelta=dt.timedelta(minutes=1)):
     """Round a datetime object to a multiple of a timedelta
@@ -38,12 +46,9 @@ def roundTime(timeInput=None, dateDelta=dt.timedelta(minutes=1)):
     rounding = (seconds+roundTo/2) // roundTo*roundTo
     return timeInput + dt.timedelta(0, rounding-seconds)
 
-apple = dt.datetime(2019,3,29,16,10,1)
-print(apple)
-rounded_apple = roundTime(apple)
 
-rounded_time = data['sttime'].apply(roundTime)
-print(rounded_apple)
+#rounded_time = data['sttime'].apply(roundTime)
+#print(rounded_time)
 
 ## This method allows python to generate a list based on lines of a txt file to not manually type them all in
 with open("M:\\Lab\\Tyson\\Syne1b master folder\\mutant day-night data\\"
