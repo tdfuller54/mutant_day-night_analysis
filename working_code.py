@@ -8,10 +8,10 @@ import seaborn as sns
 from operator import itemgetter
 
 # pd.set_option('display.height', 500)
-pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_rows', 1000000)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 300)
-np.set_printoptions(threshold=np.nan)
+np.set_printoptions(threshold=np.sys.maxsize)
 
 data = pd.read_table("M:\\Lab\\Tyson\\Syne1b master folder\\mutant day-night data\\P22219 s1b-g d196 day-night assay"
                      "\\P22219 s1bg d196 day-night.XLS")
@@ -20,6 +20,16 @@ data = pd.read_table("M:\\Lab\\Tyson\\Syne1b master folder\\mutant day-night dat
 
 ## convert sttime to datetime in python and use the timestamp.round function to round this to the nearest
 ##minute so we can use the hour value for day-night subsetting later
+
+
+##this is in progress to fix error where midnight of last night keeps previous date and should go to new date
+#data["stdt"] = data["stdate"].map(str) + " " + data["sttime"].map(str)
+#data[["stdt"]].info()
+#print(data["stdt"])
+#data["stdt"] = pd.to_datetime(data["stdt"])
+#data["stdt"] = data["stdt"].apply(lambda x: pd.Timestamp.round(x, 'min'))
+##data[["stdt"]].info()
+##print(data["stdt"])
 data["sttime"] = pd.to_datetime(data["sttime"])
 data["sttime"] = data["sttime"].apply(lambda x: pd.Timestamp.round(x, 'min'))
 data["sttime"] = data["sttime"].apply(lambda x: x.time())
@@ -45,7 +55,7 @@ with open("M:\\Lab\\Tyson\\Syne1b master folder\\mutant day-night data\\"
     Het_wells = [l.strip() for l in lines if l.strip()]
 
 with open("M:\\Lab\\Tyson\\Syne1b master folder\\mutant day-night data\\"
-           "P22219 s1b-g d196 day-night assay\\mutant_wells.txt", "r") as MW:
+          "P22219 s1b-g d196 day-night assay\\mutant_wells.txt", "r") as MW:
    lines = MW.readlines()
    Mut_wells = [l.strip() for l in lines if l.strip()]
 
@@ -73,8 +83,8 @@ grouped = data.groupby(['stdate','group', 'hour', 'minute'], as_index=False).mea
 ## From Anthony quickly visualize the data to see if any trends
 sns.set_context("talk")
 # plt.figure(figsize=(8,6))
-g = sns.FacetGrid(data=grouped, col="stdate", hue="group", height=6)
-g.map(sns.lineplot(), "hour", "actinteg")
+g = sns.FacetGrid(data=grouped, hue="group", height=6, dropna=True)
+g.map(sns.lineplot, "end", "actinteg", linewidth=0.25)
 sns.despine()
 plt.legend()
 plt.show()
@@ -98,7 +108,6 @@ sh_night6_area = sh_night6.groupby('animal', as_index=True)['actinteg'].agg(np.t
 
 print(WT_night4_area)
 all_night4 = []
-all_night4.extend(WT_night4_area_821)
 all_night4.extend(WT_night4_area)
 print(all_night4)
 
