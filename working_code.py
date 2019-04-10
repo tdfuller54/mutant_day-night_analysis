@@ -8,7 +8,7 @@ import seaborn as sns
 from operator import itemgetter
 
 # pd.set_option('display.height', 500)
-pd.set_option('display.max_rows', 1000000)
+pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 300)
 np.set_printoptions(threshold=np.sys.maxsize)
@@ -78,13 +78,37 @@ data = data[['animal', 'group', 'start', 'end', 'actinteg', 'stdate', 'sttime', 
 
 ##Use Anthony's example to group by day, treatment group, hour, then minute and apply mean over the groupings
 ## This will get average activity values for each minute but still will want to separate by each night and day later on
+## This also drops the NA group of genotypes for clarity when graphing
 grouped = data.groupby(['stdate','group', 'hour', 'minute'], as_index=False).mean()
+grouped = grouped[grouped.group != "NA"]
 
+##This generates columns grouping data into 10, 20, 30, and 60 minute intervals to use for graphing
+grouped['range1'] = pd.cut(grouped.end, list(range(0, 237900, 600)), labels=range(1, len(list(range(0, 237900, 600)))))
+grouped['range2'] = pd.cut(grouped.end, list(range(0, 237900, 1200)), labels=range(1, len(list(range(0, 237900, 1200)))))
+grouped['range3'] = pd.cut(grouped.end, list(range(0, 237900, 1800)), labels=range(1, len(list(range(0, 237900, 1800)))))
+grouped['range4'] = pd.cut(grouped.end, list(range(0, 237900, 3600)), labels=range(1, len(list(range(0, 237900, 3600)))))
+print(grouped)
 ## From Anthony quickly visualize the data to see if any trends
 sns.set_context("talk")
 # plt.figure(figsize=(8,6))
-g = sns.FacetGrid(data=grouped, hue="group", height=6, dropna=True)
-g.map(sns.lineplot, "end", "actinteg", linewidth=0.25)
+g1 = sns.FacetGrid(data=grouped, hue="group", height=6, dropna=True)
+g1.map(sns.lineplot, "range1", "actinteg", linewidth=0.25)
+g1.set_axis_labels('10 Minute Intervals', 'Activity')
+sns.despine()
+plt.legend()
+g2 = sns.FacetGrid(data=grouped, hue="group", height=6, dropna=True)
+g2.map(sns.lineplot, "range2", "actinteg", linewidth=0.25)
+g2.set_axis_labels('20 Minute Intervals', 'Activity')
+sns.despine()
+plt.legend()
+g3 = sns.FacetGrid(data=grouped, hue="group", height=6, dropna=True)
+g3.map(sns.lineplot, "range3", "actinteg", linewidth=0.25)
+g3.set_axis_labels('30 Minute Intervals', 'Activity')
+sns.despine()
+plt.legend()
+g4 = sns.FacetGrid(data=grouped, hue="group", height=6, dropna=True)
+g4.map(sns.lineplot, "range4", "actinteg", linewidth=0.25)
+g4.set_axis_labels('1 Hour Intervals', 'Activity')
 sns.despine()
 plt.legend()
 plt.show()
@@ -93,46 +117,18 @@ plt.show()
 WT_night4_area = WT_night4.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
 WT_day5_area = WT_day5.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
 WT_night5_area = WT_night5.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-WT_day6_area = WT_day6.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-WT_night6_area = WT_night6.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-lg_night4_area = lg_night4.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-lg_day5_area = lg_day5.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-lg_night5_area = lg_night5.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-lg_day6_area = lg_day6.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-lg_night6_area = lg_night6.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-sh_night4_area = sh_night4.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-sh_day5_area = sh_day5.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-sh_night5_area = sh_night5.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-sh_day6_area = sh_day6.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
-sh_night6_area = sh_night6.groupby('animal', as_index=True)['actinteg'].agg(np.trapz)
 
-print(WT_night4_area)
-all_night4 = []
-all_night4.extend(WT_night4_area)
-print(all_night4)
+
+
 
 ##do t test and mann whitney test comparing days and nights of area under curve each group
 print("stats for WTvlg night 4")
 print(stats.mannwhitneyu(WT_night4_area, lg_night4_area))
-print("stats for WTvlg day 5")
-print(stats.mannwhitneyu(WT_day5_area, lg_day5_area))
-print("stats for WTvlg night 5")
-print(stats.mannwhitneyu(WT_night5_area, lg_night5_area))
-print("stats for WTvlg day6")
-print(stats.mannwhitneyu(WT_day6_area, lg_day6_area))
-print("stats for WTvlg night 6")
-print(stats.mannwhitneyu(WT_night6_area, lg_night6_area))
+
 
 print("stats for WTvsh night 4")
 print(stats.mannwhitneyu(WT_night4_area, sh_night4_area))
-print("stats for WTvsh day 5")
-print(stats.mannwhitneyu(WT_day5_area, sh_day5_area))
-print("stats for WTvsh night 5")
-print(stats.mannwhitneyu(WT_night5_area, sh_night5_area))
-print("stats for WTvsh day6")
-print(stats.mannwhitneyu(WT_day6_area, sh_day6_area))
-print("stats for WTvsh night 6")
-print(stats.mannwhitneyu(WT_night6_area, sh_night6_area))
+
 
 # data taking total movement for each fish during each period
 
@@ -152,62 +148,3 @@ plt.boxplot(day5_area, whis=[5, 95], labels=["WT", "lg", "sh"], positions=[1, 2,
 plt.xlim(0.25, 3.75)
 plt.title("Area Under the Curve Day 5")
 
-plt.figure(3)
-night5_area = [WT_night5_area, lg_night5_area, sh_night5_area]
-plt.boxplot(night5_area, whis=[5, 95], labels=["WT", "lg", "sh"], positions=[1, 2, 3], widths=0.5)
-plt.xlim(0.25, 3.75)
-plt.title("Area Under the Curve Night 5")
-
-plt.figure(4)
-day6_area = [WT_day6_area, lg_day6_area, sh_day6_area]
-plt.boxplot(day6_area, whis=[5, 95], labels=["WT", "lg", "sh"], positions=[1, 2, 3], widths=0.5)
-plt.xlim(0.25, 3.75)
-plt.title("Area Under the Curve Day 6")
-
-plt.figure(5)
-night6_area = [WT_night6_area, lg_night6_area, sh_night6_area]
-plt.boxplot(night6_area, whis=[5, 95], labels=["WT", "lg", "sh"], positions=[1, 2, 3], widths=0.5)
-plt.xlim(0.25, 3.75)
-plt.title("Area Under the Curve Night 6")
-
-# plt.show()
-
-# print(WT_day5_act_min)
-# print(WT_day5_act)
-
-## calculate the average movement by minute and standard errors for each group starting at midnight
-data_WT_midnight = data_WT.loc[data_WT["end"] >= 31560]
-data_lg_midnight = data_lg.loc[data_lg["end"] >= 31560]
-data_sh_midnight = data_sh.loc[data_sh["end"] >= 31560]
-WT_act_by_min = data_WT_midnight.groupby('end', as_index=True)['actinteg'].agg([np.mean, stats.sem])
-lg_act_by_min = data_lg_midnight.groupby('end', as_index=True)['actinteg'].agg([np.mean, stats.sem])
-sh_act_by_min = data_sh_midnight.groupby('end', as_index=True)['actinteg'].agg([np.mean, stats.sem])
-# print(WT_act_by_min)
-
-## generate arrays containing x and y values to plot and arrays with standard errors
-x = np.array(range(526, len(WT_act_by_min) + 526))
-# print (x)
-
-y = np.around(WT_act_by_min['mean'].values, decimals=2)
-y2 = np.around(lg_act_by_min['mean'].values, decimals=2)
-y3 = np.around(sh_act_by_min['mean'].values, decimals=2)
-
-# print(y)
-
-error = np.around(WT_act_by_min['sem'].values, decimals=2)
-error2 = np.around(lg_act_by_min['sem'].values, decimals=2)
-error3 = np.around(sh_act_by_min['sem'].values, decimals=2)
-
-plt.figure(6)
-plt.plot(x, y, 'k-', linewidth=0.25, color="b")
-plt.fill_between(x, y - error, y + error, facecolor='#add8e6')
-
-# plt.plot(x, y2, 'k-', linewidth=0.25, color="r")
-# plt.fill_between(x, y2-error2, y2+error2, facecolor='#f8cdcf')
-
-plt.plot(x, y3, 'k-', linewidth=0.25, color="g")
-plt.fill_between(x, y3 - error3, y3 + error3, facecolor='#b1e0c4')
-
-plt.ylim(-10, 750)
-
-plt.show()
